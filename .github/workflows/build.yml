@@ -18,12 +18,12 @@ jobs:
     
     steps:
     - name: Checkout código
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '6.0.x'
 
@@ -37,6 +37,7 @@ jobs:
       run: Get-ChildItem ./publish -Recurse
 
     - name: Crear ZIP
+      shell: pwsh
       run: |
         $version = "${{ github.event.inputs.version }}"
         if ([string]::IsNullOrEmpty($version)) {
@@ -45,10 +46,12 @@ jobs:
         if ([string]::IsNullOrEmpty($version)) {
           $version = "manual"
         }
+        # Limpiar el nombre de la versión (quitar caracteres no válidos)
+        $version = $version -replace '[^\w\.-]', '_'
         Compress-Archive -Path ./publish/* -DestinationPath "./MiLauncher-$version.zip" -Force
 
     - name: Crear Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.version != ''
       with:
         tag_name: ${{ github.event.inputs.version || github.ref_name }}
@@ -57,22 +60,46 @@ jobs:
           # 🚀 MiLauncher ${{ github.event.inputs.version || github.ref_name }}
           
           ## 📦 Características:
-          - Launcher simple y funcional
-          - Interfaz limpia en WPF
-          - Listo para expandir
+          - Launcher simple y funcional creado con WPF y .NET 6
+          - Interfaz limpia y moderna
+          - Build automático con GitHub Actions
+          - Listo para expandir con más funcionalidades
           
-          ## 📥 Descargas:
-          - ZIP completo con todo lo necesario
+          ## 📥 Archivos incluidos:
+          - `MiLauncher.exe` - Ejecutable principal
+          - DLLs necesarias para .NET 6
+          - Archivos de configuración
           
-          ## ⚙️ Build automático desde GitHub Actions
+          ## 📦 Descarga completa:
+          - `MiLauncher-${{ github.event.inputs.version || github.ref_name }}.zip` - Todo comprimido
+          
+          ## ⚙️ Detalles del build:
+          - **Commit:** ${{ github.sha }}
+          - **Trigger:** ${{ github.event_name }}
+          - **Ejecutado por:** @${{ github.actor }}
+          
+          ## 🔧 Cómo usar:
+          1. Descarga el ZIP o el ejecutable
+          2. Extrae los archivos (si descargaste el ZIP)
+          3. Ejecuta `MiLauncher.exe`
+          
+          ## 🚀 Próximas características:
+          - [ ] Descarga automática de actualizaciones
+          - [ ] Noticias del servidor
+          - [ ] Login automático
+          - [ ] Múltiples servidores
         files: |
           ./MiLauncher-*.zip
           ./publish/*.exe
+        draft: false
+        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Subir artifact (siempre)
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: MiLauncher
+        name: MiLauncher-${{ github.sha }}
         path: ./publish/
+        retention-days: 90
+        if-no-files-found: error
