@@ -1,0 +1,78 @@
+name: Build y Release MiLauncher
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versión para release'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '6.0.x'
+
+    - name: Restaurar paquetes
+      run: dotnet restore src/MiLauncher/MiLauncher.csproj
+
+    - name: Compilar
+      run: dotnet publish src/MiLauncher/MiLauncher.csproj -c Release -o ./publish
+
+    - name: Ver archivos compilados
+      run: Get-ChildItem ./publish -Recurse
+
+    - name: Crear ZIP
+      run: |
+        $version = "${{ github.event.inputs.version }}"
+        if ([string]::IsNullOrEmpty($version)) {
+          $version = "${{ github.ref_name }}"
+        }
+        if ([string]::IsNullOrEmpty($version)) {
+          $version = "manual"
+        }
+        Compress-Archive -Path ./publish/* -DestinationPath "./MiLauncher-$version.zip" -Force
+
+    - name: Crear Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.version != ''
+      with:
+        tag_name: ${{ github.event.inputs.version || github.ref_name }}
+        name: MiLauncher ${{ github.event.inputs.version || github.ref_name }}
+        body: |
+          # 🚀 MiLauncher ${{ github.event.inputs.version || github.ref_name }}
+          
+          ## 📦 Características:
+          - Launcher simple y funcional
+          - Interfaz limpia en WPF
+          - Listo para expandir
+          
+          ## 📥 Descargas:
+          - ZIP completo con todo lo necesario
+          
+          ## ⚙️ Build automático desde GitHub Actions
+        files: |
+          ./MiLauncher-*.zip
+          ./publish/*.exe
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Subir artifact (siempre)
+      uses: actions/upload-artifact@v3
+      with:
+        name: MiLauncher
+        path: ./publish/
