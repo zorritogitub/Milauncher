@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>  <!-- Cambiado de net6.0 a net8.0 -->
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <AssemblyName>MiLauncher</AssemblyName>
