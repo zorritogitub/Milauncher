@@ -8,20 +8,17 @@ namespace MiLauncher
     {
         public MainWindow()
         {
-            InitializeComponent();
+            InitializeComponent(); // Esto debe estar aquí
         }
 
         private void Jugar_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                // Aquí puedes poner la lógica para iniciar tu juego
-                StatusText.Text = "Iniciando juego...";
+                StatusText.Text = "Iniciando juego..."; // StatusText debe existir en XAML
                 
-                // Ejemplo: abrir el explorador de archivos
-                Process.Start("explorer.exe");
-                
-                // O si tienes un juego: Process.Start("juego.exe");
+                // Aquí iría la lógica para iniciar tu juego
+                Process.Start("explorer.exe"); // Ejemplo
                 
                 StatusText.Text = "Juego iniciado correctamente";
             }
