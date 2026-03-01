@@ -19,8 +19,20 @@ jobs:
     steps:
     - name: Checkout código
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+
+    - name: Encontrar archivo .csproj
+      id: find-csproj
+      shell: pwsh
+      run: |
+        $csproj = Get-ChildItem -Recurse -Filter *.csproj | Select-Object -First 1
+        if ($csproj) {
+          Write-Host "Found csproj: $($csproj.FullName)"
+          echo "csproj_path=$($csproj.FullName)" >> $env:GITHUB_OUTPUT
+          echo "csproj_dir=$($csproj.DirectoryName)" >> $env:GITHUB_OUTPUT
+        } else {
+          Write-Host "No .csproj file found!"
+          exit 1
+        }
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -28,20 +40,20 @@ jobs:
         dotnet-version: '8.0.x'
 
     - name: Restaurar paquetes
-      run: dotnet restore MiLauncher.csproj  # Cambiado: sin src/
+      run: dotnet restore "${{ steps.find-csproj.outputs.csproj_path }}"
 
-    - name: Compilar
-      run: dotnet publish MiLauncher.csproj -c Release -o ./publish  # Cambiado: sin src/
+    - name: Compilar y publicar
+      run: dotnet publish "${{ steps.find-csproj.outputs.csproj_path }}" -c Release -o ./publish
 
-    - name: Eliminar archivos no necesarios
+    - name: Limpiar archivos no deseados
       shell: pwsh
       run: |
         # Eliminar archivos de Android/MAUI si existen
-        if (Test-Path "./publish/MainActivity.cs") { Remove-Item "./publish/MainActivity.cs" }
-        if (Test-Path "./publish/*.android.cs") { Remove-Item "./publish/*.android.cs" }
+        Get-ChildItem ./publish -Filter *.cs | Remove-Item -Force -ErrorAction SilentlyContinue
+        Get-ChildItem ./publish -Filter *.android.* | Remove-Item -Force -ErrorAction SilentlyContinue
 
     - name: Ver archivos compilados
-      run: Get-ChildItem ./publish -Recurse
+      run: Get-ChildItem ./publish
 
     - name: Crear ZIP
       shell: pwsh
@@ -65,23 +77,15 @@ jobs:
         body: |
           # 🚀 MiLauncher ${{ github.event.inputs.version || github.ref_name }}
           
-          ## 📦 Características:
-          - Launcher estilo Blizzard con .NET 8 y WPF
-          - Interfaz moderna con sidebar y grid de juegos
-          - Ventana personalizada con sombras
-          - Build automático con GitHub Actions
+          ## ✨ Características:
+          - Launcher estilo Blizzard con .NET 8
+          - Interfaz moderna con sidebar
+          - Ventana personalizada
           
-          ## 📥 Archivos:
-          - `MiLauncher.exe` y dependencias
-          - ZIP completo con todo incluido
-          
-          ## ⚙️ Detalles Técnicos:
-          - **Target:** .NET 8.0-windows
-          - **Commit:** ${{ github.sha }}
-          - **Trigger:** ${{ github.event_name }}
+          ## 📦 Archivos incluidos:
+          - Ejecutable y dependencias
         files: |
           ./MiLauncher-*.zip
-          ./publish/*.exe
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
