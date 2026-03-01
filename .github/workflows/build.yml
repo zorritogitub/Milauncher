@@ -25,13 +25,20 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'  # Cambiado a .NET 8
+        dotnet-version: '8.0.x'
 
     - name: Restaurar paquetes
-      run: dotnet restore src/MiLauncher/MiLauncher.csproj
+      run: dotnet restore MiLauncher.csproj  # Cambiado: sin src/
 
     - name: Compilar
-      run: dotnet publish src/MiLauncher/MiLauncher.csproj -c Release -o ./publish
+      run: dotnet publish MiLauncher.csproj -c Release -o ./publish  # Cambiado: sin src/
+
+    - name: Eliminar archivos no necesarios
+      shell: pwsh
+      run: |
+        # Eliminar archivos de Android/MAUI si existen
+        if (Test-Path "./publish/MainActivity.cs") { Remove-Item "./publish/MainActivity.cs" }
+        if (Test-Path "./publish/*.android.cs") { Remove-Item "./publish/*.android.cs" }
 
     - name: Ver archivos compilados
       run: Get-ChildItem ./publish -Recurse
@@ -59,15 +66,17 @@ jobs:
           # 🚀 MiLauncher ${{ github.event.inputs.version || github.ref_name }}
           
           ## 📦 Características:
-          - Launcher simple con .NET 8 y WPF
-          - Interfaz limpia y moderna
+          - Launcher estilo Blizzard con .NET 8 y WPF
+          - Interfaz moderna con sidebar y grid de juegos
+          - Ventana personalizada con sombras
           - Build automático con GitHub Actions
           
           ## 📥 Archivos:
           - `MiLauncher.exe` y dependencias
           - ZIP completo con todo incluido
           
-          ## ⚙️ Detalles:
+          ## ⚙️ Detalles Técnicos:
+          - **Target:** .NET 8.0-windows
           - **Commit:** ${{ github.sha }}
           - **Trigger:** ${{ github.event_name }}
         files: |
