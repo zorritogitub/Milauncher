@@ -4,13 +4,17 @@
         Title="Mi Súper Launcher" 
         Height="700" 
         Width="1000"
+        MinHeight="500"
+        MinWidth="800"
         WindowStartupLocation="CenterScreen"
         Background="#1E282C"
         Foreground="White"
         WindowStyle="None"
-        ResizeMode="CanResize"
+        ResizeMode="CanResizeWithGrip"
         AllowsTransparency="True"
-        WindowState="Normal">
+        WindowState="Normal"
+        BorderThickness="1"
+        BorderBrush="#0F1719">
     
     <Window.Resources>
         <!-- Colores estilo Blizzard -->
@@ -65,8 +69,44 @@
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="{StaticResource AccentBlueHover}"/>
                 </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#0080C0"/>
+                </Trigger>
             </Style.Triggers>
         </Style>
+
+        <!-- DataTemplate para los juegos -->
+        <DataTemplate x:Key="GameTemplate" DataType="local:GameInfo">
+            <Border Background="#2A3A40"
+                    CornerRadius="8"
+                    Width="200"
+                    Height="250"
+                    Margin="0,0,20,20"
+                    Cursor="Hand">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.2"/>
+                </Border.Effect>
+                <StackPanel>
+                    <Border Height="150"
+                            Background="#162022"
+                            CornerRadius="8,8,0,0">
+                        <TextBlock Text="🎮"
+                                   FontSize="50"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Margin="15,10">
+                        <TextBlock Text="{Binding Nombre}"
+                                   FontWeight="Bold"
+                                   FontSize="16"
+                                   Margin="0,0,0,5"/>
+                        <TextBlock Text="{Binding Estado}"
+                                   Foreground="{StaticResource AccentBlue}"
+                                   FontSize="12"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
     </Window.Resources>
 
     <!-- Border principal para dar efecto de ventana personalizada -->
@@ -79,10 +119,13 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="30"/> <!-- Barra de título -->
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="15"/> <!-- Área para redimensionar -->
             </Grid.RowDefinitions>
 
-            <!-- Barra de título personalizada -->
-            <Grid Grid.Row="0" Background="{StaticResource BackgroundDarker}">
+            <!-- Barra de título personalizada (ARRASTRABLE) -->
+            <Grid Grid.Row="0" 
+                  Background="{StaticResource BackgroundDarker}"
+                  MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
@@ -97,15 +140,21 @@
                            Margin="15,0,0,0"
                            VerticalAlignment="Center"/>
                 
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,10,0">
+                <StackPanel Grid.Column="2" 
+                            Orientation="Horizontal" 
+                            Margin="0,0,10,0"
+                            MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
+                            MouseLeftButtonDownBlocker="False">
                     <Button Content="─" 
                             Click="Minimize_Click"
                             Background="Transparent"
                             Foreground="{StaticResource TextMuted}"
                             BorderThickness="0"
                             Width="30"
+                            Height="30"
                             FontSize="14"
-                            Cursor="Hand">
+                            Cursor="Hand"
+                            Padding="0">
                         <Button.Resources>
                             <Style TargetType="Border">
                                 <Setter Property="CornerRadius" Value="3"/>
@@ -118,16 +167,20 @@
                             Foreground="{StaticResource TextMuted}"
                             BorderThickness="0"
                             Width="30"
+                            Height="30"
                             FontSize="12"
-                            Cursor="Hand"/>
+                            Cursor="Hand"
+                            Padding="0"/>
                     <Button Content="✕" 
                             Click="Close_Click"
                             Background="Transparent"
                             Foreground="{StaticResource TextMuted}"
                             BorderThickness="0"
                             Width="30"
+                            Height="30"
                             FontSize="14"
-                            Cursor="Hand">
+                            Cursor="Hand"
+                            Padding="0">
                         <Button.Resources>
                             <Style TargetType="Border">
                                 <Setter Property="CornerRadius" Value="3"/>
@@ -212,14 +265,21 @@
                                 Height="200"
                                 Margin="0,0,0,30">
                             <Grid>
-                                <Image Source="https://via.placeholder.com/800x200/0F1719/00AEFF?text=JUEGO+DESTACADO"
-                                       Stretch="UniformToFill"/>
+                                <Border Background="#162022">
+                                    <TextBlock Text="JUEGO DESTACADO"
+                                               FontSize="32"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource TextMuted}"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
                                 <Border VerticalAlignment="Bottom"
                                         Background="#80000000"
                                         Padding="20">
-                                    <TextBlock Text="JUEGO DESTACADO - YA DISPONIBLE"
-                                               FontSize="24"
-                                               FontWeight="Bold"/>
+                                    <TextBlock Text="YA DISPONIBLE - 50% DESCUENTO"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource AccentBlue}"/>
                                 </Border>
                             </Grid>
                         </Border>
@@ -231,44 +291,14 @@
                                    Foreground="{StaticResource TextMuted}"
                                    Margin="0,0,0,15"/>
 
-                        <!-- Grid de juegos -->
-                        <ItemsControl>
+                        <!-- Grid de juegos usando ItemsControl -->
+                        <ItemsControl ItemsSource="{Binding MisJuegos}"
+                                      ItemTemplate="{StaticResource GameTemplate}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <WrapPanel Orientation="Horizontal"/>
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
-                            
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Background="#2A3A40"
-                                            CornerRadius="8"
-                                            Width="200"
-                                            Height="250"
-                                            Margin="0,0,20,20"
-                                            Cursor="Hand">
-                                        <StackPanel>
-                                            <Border Height="150"
-                                                    Background="#162022"
-                                                    CornerRadius="8,8,0,0">
-                                                <TextBlock Text="🎮"
-                                                           FontSize="50"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"/>
-                                            </Border>
-                                            <StackPanel Margin="15,10">
-                                                <TextBlock Text="{Binding Nombre}"
-                                                           FontWeight="Bold"
-                                                           FontSize="16"
-                                                           Margin="0,0,0,5"/>
-                                                <TextBlock Text="{Binding Estado}"
-                                                           Foreground="{StaticResource AccentBlue}"
-                                                           FontSize="12"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
                         <!-- Noticias -->
@@ -276,7 +306,7 @@
                                    FontSize="18"
                                    FontWeight="Bold"
                                    Foreground="{StaticResource TextMuted}"
-                                   Margin="0,20,0,15"/>
+                                   Margin="0,30,0,15"/>
 
                         <!-- Noticia 1 -->
                         <Border Background="#2A3A40"
@@ -303,7 +333,7 @@
                                     <TextBlock Text="Nueva actualización disponible"
                                                FontWeight="Bold"
                                                FontSize="16"/>
-                                    <TextBlock Text="Hace 2 horas"
+                                    <TextBlock Text="Hace 2 horas · Versión 2.1.0"
                                                Foreground="{StaticResource TextMuted}"
                                                FontSize="12"/>
                                 </StackPanel>
@@ -335,36 +365,36 @@
                                     <TextBlock Text="Evento especial este fin de semana"
                                                FontWeight="Bold"
                                                FontSize="16"/>
-                                    <TextBlock Text="Ayer"
+                                    <TextBlock Text="Ayer · Recompensas exclusivas"
                                                Foreground="{StaticResource TextMuted}"
                                                FontSize="12"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
 
-                        <!-- Botón JUGAR flotante abajo a la derecha -->
-                        <Border HorizontalAlignment="Right"
+                        <!-- Botón JUGAR -->
+                        <Border HorizontalAlignment="Center"
                                 Margin="0,30,0,30">
                             <Button Style="{StaticResource PlayButtonStyle}"
-                                    Content="JUGAR"
+                                    Content="JUGAR AHORA"
                                     Click="Jugar_Click"/>
                         </Border>
-
-                        <!-- Barra de estado -->
-                        <StatusBar Background="#162022"
-                                   Margin="0,20,0,0">
-                            <StatusBarItem>
-                                <TextBlock x:Name="StatusText" 
-                                           Text="Listo"
-                                           Foreground="{StaticResource TextMuted}"/>
-                            </StatusBarItem>
-                            <StatusBarItem HorizontalAlignment="Right">
-                                <TextBlock Text="v1.0.0"
-                                           Foreground="{StaticResource TextMuted}"/>
-                            </StatusBarItem>
-                        </StatusBar>
                     </StackPanel>
                 </ScrollViewer>
+            </Grid>
+
+            <!-- Área para redimensionar (esquina inferior derecha) -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="15"/>
+                </Grid.ColumnDefinitions>
+                
+                <Border Grid.Column="1"
+                        Background="Transparent"
+                        Cursor="SizeNWSE"
+                        MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
+                        ToolTip="Redimensionar"/>
             </Grid>
         </Grid>
     </Border>
